@@ -69,6 +69,38 @@ function depthFirstSearch(rootNode: Node, goal: string): SearchResult {
   return { searchingPath, solutionPath };
 }
 
+function breathFirstSearch(rootNode: Node, goal: string): SearchResult {
+  const visitedNodes: Node[] = [rootNode];
+  const nodeQueue: Node[] = [rootNode];
+  const searchingPath: string[] = [];
+  let reachedGoal = false;
+
+  while (nodeQueue.length > 0 && !reachedGoal) {
+    const node = nodeQueue.shift();
+    searchingPath.push(node!.name);
+
+    if (node?.children && node.children.length > 0) {
+      for (const childNode of node.children) {
+        if (!visitedNodes.includes(childNode)) {
+          visitedNodes.push(childNode);
+          nodeQueue.push(childNode);
+
+          if (childNode.name === goal) {
+            searchingPath.push(childNode.name);
+            reachedGoal = true;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  const solutionPath =
+    visitedNodes.length > 1 ? backtrace(visitedNodes.at(-1)!) : [];
+
+  return { searchingPath, solutionPath };
+}
+
 const nodeA = createNode("A");
 const nodeB = createNode("B").setParent(nodeA);
 const nodeC = createNode("C").setParent(nodeB);
@@ -82,12 +114,13 @@ const nodeJ = createNode("J").setParent(nodeG);
 const nodeK = createNode("K").setParent(nodeH);
 const nodeL = createNode("L").setParent(nodeF);
 
-nodeA.setChildren(nodeE, nodeD, nodeB);
+nodeA.setChildren(nodeB, nodeD, nodeE);
 nodeB.setChildren(nodeC);
-nodeD.setChildren(nodeC, nodeH, nodeG);
-nodeG.setChildren(nodeJ, nodeI);
+nodeD.setChildren(nodeC, nodeG, nodeH);
+nodeG.setChildren(nodeI, nodeJ);
 nodeH.setChildren(nodeK);
 nodeE.setChildren(nodeF);
 nodeF.setChildren(nodeL);
 
-console.log(depthFirstSearch(nodeA, "K"));
+console.log("dfs", "->", depthFirstSearch(nodeA, "K"));
+console.log("bfs", "->", breathFirstSearch(nodeA, "K"));
