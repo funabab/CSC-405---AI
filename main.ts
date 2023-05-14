@@ -1,62 +1,93 @@
 type Node = {
   name: string;
+  parent?: Node;
   children?: Node[];
+  setParent: (node: Node) => Node;
+  setChildren: (...args: Node[]) => Node;
 };
 
-function createNode(name: string, children?: Node[]): Node {
+type SearchResult = {
+  searchingPath: string[];
+  solutionPath: string[];
+};
+
+function createNode(name: string): Node {
   return {
     name,
-    children,
+    setParent(node) {
+      this.parent = node;
+      return this;
+    },
+    setChildren(...children) {
+      this.children = children;
+      return this;
+    },
   };
 }
 
-function depthFirstSearch(rootNode: Node, goal: string): string[] {
+function backtrace(startNode: Node): string[] {
+  let node: Node | undefined = startNode;
   const result: string[] = [];
 
-  function tranverse(node: Node) {
-    if (result.includes(node.name)) {
-      return false;
-    }
-
-    result.push(node.name);
-    if (node.name === goal) {
-      return true;
-    }
-
-    if (!node.children) {
-      return false;
-    }
-    for (const childNode of node.children) {
-      if (tranverse(childNode)) {
-        return true;
-      }
-    }
-    return false;
+  while (node) {
+    result.unshift(node.name);
+    node = node.parent;
   }
 
-  tranverse(rootNode);
   return result;
 }
 
-const nodeA = createNode("A");
-const nodeB = createNode("B");
-const nodeC = createNode("C");
-const nodeD = createNode("D");
-const nodeE = createNode("E");
-const nodeF = createNode("F");
-const nodeG = createNode("G");
-const nodeH = createNode("H");
-const nodeI = createNode("I");
-const nodeJ = createNode("J");
-const nodeK = createNode("K");
-const nodeL = createNode("L");
+function depthFirstSearch(rootNode: Node, goal: string): SearchResult {
+  const visitedNodes: Node[] = [rootNode];
+  const nodeStack: Node[] = [rootNode];
+  const searchingPath: string[] = [];
+  let reachedGoal = false;
 
-nodeA.children = [nodeB, nodeD, nodeE];
-nodeB.children = [nodeC];
-nodeD.children = [nodeC, nodeG, nodeH];
-nodeG.children = [nodeI, nodeJ];
-nodeH.children = [nodeK];
-nodeE.children = [nodeF];
-nodeF.children = [nodeL];
+  while (nodeStack.length > 0 && !reachedGoal) {
+    const node = nodeStack.pop();
+    searchingPath.push(node!.name);
+
+    if (node?.children && node.children.length > 0) {
+      for (const childNode of node.children) {
+        if (!visitedNodes.includes(childNode)) {
+          visitedNodes.push(childNode);
+          nodeStack.push(childNode);
+
+          if (childNode.name === goal) {
+            searchingPath.push(childNode.name);
+            reachedGoal = true;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  const solutionPath =
+    visitedNodes.length > 1 ? backtrace(visitedNodes.at(-1)!) : [];
+
+  return { searchingPath, solutionPath };
+}
+
+const nodeA = createNode("A");
+const nodeB = createNode("B").setParent(nodeA);
+const nodeC = createNode("C").setParent(nodeB);
+const nodeD = createNode("D").setParent(nodeA);
+const nodeE = createNode("E").setParent(nodeA);
+const nodeF = createNode("F").setParent(nodeE);
+const nodeG = createNode("G").setParent(nodeD);
+const nodeH = createNode("H").setParent(nodeD);
+const nodeI = createNode("I").setParent(nodeG);
+const nodeJ = createNode("J").setParent(nodeG);
+const nodeK = createNode("K").setParent(nodeH);
+const nodeL = createNode("L").setParent(nodeF);
+
+nodeA.setChildren(nodeE, nodeD, nodeB);
+nodeB.setChildren(nodeC);
+nodeD.setChildren(nodeC, nodeH, nodeG);
+nodeG.setChildren(nodeJ, nodeI);
+nodeH.setChildren(nodeK);
+nodeE.setChildren(nodeF);
+nodeF.setChildren(nodeL);
 
 console.log(depthFirstSearch(nodeA, "K"));
